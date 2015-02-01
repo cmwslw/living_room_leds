@@ -30,24 +30,13 @@ void loop() {
   for (int i = 0; i < 4; i += 1) {
     expand();
   }
-  updates += 1;
   currcolor += 1;
-  if (updates == 10) {
-    if (on) {
-      on = false;
-    } else {
-      on = true;
-    }
-    updates = 0;
-  }
   if (currcolor == 256) {
     currcolor = 0;
   }
   uint32_t nextcolor = strip.Color(0, 0, 0);
-  if (on) {
-    int intensity = abs((analogRead(A1) / 4) - 129);
-    nextcolor = Wheel(currcolor, intensity);
-  }
+  int intensity = abs((analogRead(A1) / 4) - 129);
+  nextcolor = Wheel(currcolor, intensity);
    
   strip.setPixelColor(195, nextcolor);
   strip.show();
