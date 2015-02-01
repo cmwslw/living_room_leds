@@ -17,6 +17,9 @@
 //   NEO_KHZ400  400 KHz bitstream (e.g. FLORA pixels)
 //   NEO_KHZ800  800 KHz bitstream (e.g. High Density LED strip), correct for neopixel stick
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
+int updates = 0;
+int currcolor = 0;
+bool on = true;
 
 void setup() {
   strip.begin();
@@ -24,37 +27,37 @@ void setup() {
 }
 
 void loop() {
-  update();
+  for (int i = 0; i < 4; i += 1) {
+    expand();
+  }
+  updates += 1;
+  currcolor += 1;
+  if (updates == 10) {
+    if (on) {
+      on = false;
+    } else {
+      on = true;
+    }
+    updates = 0;
+  }
+  if (currcolor == 256) {
+    currcolor = 0;
+  }
+  uint32_t nextcolor = strip.Color(0, 0, 0);
+  if (on) {
+    nextcolor = Wheel(currcolor);
+  }
+    
+  strip.setPixelColor(195, nextcolor);
+  strip.show();
 }
 
-void update() {
-  strip.setPixelColor(195, Wheel(128));
-  strip.show();
+void expand() {
   for (int i = 1; i <= 195; i += 1) {
     strip.setPixelColor(i-1, strip.getPixelColor(i));
   }
   for (int i = 299; i >= 195; i -= 1) {
     strip.setPixelColor(i+1, strip.getPixelColor(i));
-  }
-  
-  delay(50);
-}
-
-//Theatre-style crawling lights with rainbow effect
-void theaterChaseRainbow(uint8_t wait) {
-  for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
-    for (int q=0; q < 3; q++) {
-        for (int i=0; i < strip.numPixels(); i=i+3) {
-          strip.setPixelColor(i+q, Wheel( (i+j) % 255));    //turn every third pixel on
-        }
-        strip.show();
-       
-        delay(wait);
-       
-        for (int i=0; i < strip.numPixels(); i=i+3) {
-          strip.setPixelColor(i+q, 0);        //turn every third pixel off
-        }
-    }
   }
 }
 
