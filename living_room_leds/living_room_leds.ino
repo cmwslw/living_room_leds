@@ -24,6 +24,7 @@ int currcolor = 0;
 // Set to -1 to turn replay off
 int replay_ind = -1;
 int hist[NHIST];
+int lastdir = 0;
 
 void setup() {
   strip.begin();
@@ -58,11 +59,21 @@ void loop() {
   }
   
   uint32_t nextcolor = strip.Color(0, 0, 0);
+  int y = (analogRead(A1)/4) - 129;
+  int dir = 0;
+  if (y > 50)
+    dir = 1;
+  else if (y < -50)
+    dir = -1;
+    
+  if (dir == 1 && lastdir == 0) {
+    replay_ind = -1;
+  }
   
   if (replay_ind == -1) {
     //int intensity = abs((analogRead(A1) / 4) - 129);
     int intensity = 0;
-    if (abs((analogRead(A1) / 4) - 129) > 50) {
+    if (dir == 1) {
       intensity = 128;
     }
     nextcolor = Wheel(currcolor, intensity);
@@ -89,6 +100,7 @@ void loop() {
    
   strip.setPixelColor(195, nextcolor);
   strip.show();
+  lastdir = dir;
 }
 
 void expand() {
