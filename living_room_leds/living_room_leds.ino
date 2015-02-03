@@ -17,16 +17,38 @@
 //   NEO_KHZ400  400 KHz bitstream (e.g. FLORA pixels)
 //   NEO_KHZ800  800 KHz bitstream (e.g. High Density LED strip), correct for neopixel stick
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
-int updates = 0;
+
 int currcolor = 0;
-bool on = true;
+
+#define NHIST 20
+// Set to -1 to turn replay off
+int replay_ind = -1;
+int hist[NHIST];
 
 void setup() {
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
+  clearhist();
+  
+  // Enable demo replay
+  hist[0] = 20;
+  hist[1] = 20;
+  hist[2] = 10;
+  hist[3] = 10;
+  hist[4] = 10;
+  hist[5] = 10;
+  hist[6] = -1; // Not actually needed
+  replay_ind = 0;
+}
+
+void clearhist() {
+  for (int i = 0; i < NHIST; i++) {
+    hist[i] = -1;
+  }
 }
 
 void loop() {
+  // Always run for expanding modes
   for (int i = 0; i < 4; i += 1) {
     expand();
   }
@@ -34,16 +56,43 @@ void loop() {
   if (currcolor == 256) {
     currcolor = 0;
   }
+  
   uint32_t nextcolor = strip.Color(0, 0, 0);
-  int intensity = abs((analogRead(A1) / 4) - 129);
-  nextcolor = Wheel(currcolor, intensity);
+  
+  if (replay_ind == -1) {
+    //int intensity = abs((analogRead(A1) / 4) - 129);
+    int intensity = 0;
+    if (abs((analogRead(A1) / 4) - 129) > 50) {
+      intensity = 128;
+    }
+    nextcolor = Wheel(currcolor, intensity);
+  } else {
+    bool on = false;
+    int replay_ind_copy = replay_ind;
+    int i = 0;
+    while (hist[i] != -1 && replay_ind_copy >= 0) {
+      if (on) {
+        on = false;
+      } else {
+        on = true;
+      }
+      replay_ind_copy -= hist[i];
+      i += 1;
+    }
+    if (hist[i] == -1 && replay_ind_copy >= 0)
+      replay_ind = 0;
+    else
+      replay_ind += 1;
+    if (on)
+      nextcolor = Wheel(currcolor, 128);
+  }
    
   strip.setPixelColor(195, nextcolor);
   strip.show();
 }
 
 void expand() {
-  for (int i = 1; i <= 195; i += 1) {
+  for (int i = 91; i <= 195; i += 1) {
     strip.setPixelColor(i-1, strip.getPixelColor(i));
   }
   for (int i = 299; i >= 195; i -= 1) {
