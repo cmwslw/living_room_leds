@@ -25,6 +25,8 @@ int currcolor = 0;
 int replay_ind = -1;
 int hist[NHIST];
 int lastdir = 0;
+int record_ind;
+int record_time;
 
 void setup() {
   strip.begin();
@@ -46,6 +48,8 @@ void clearhist() {
   for (int i = 0; i < NHIST; i++) {
     hist[i] = -1;
   }
+  record_ind = -1;
+  record_time = 0;
 }
 
 void loop() {
@@ -67,13 +71,43 @@ void loop() {
     dir = -1;
     
   if (dir == 1 && lastdir == 0) {
-    replay_ind = -1;
+    if (replay_ind != -1) {
+      replay_ind = -1;
+      clearhist();
+    } else if (hist[0] != -1) {
+      // Start playback if it is in memory
+      hist[record_ind] = record_time;
+      record_ind = -1;
+      replay_ind = 0;
+    }
+  } else if (dir == -1 && lastdir == 0) {
+    // Must not be playing to record
+    if (replay_ind != -1) {
+      replay_ind = -1;
+      clearhist();
+    }
+    if (record_ind == -1) {
+      record_ind = 0;
+      record_time = 0;
+    } else {
+      hist[record_ind] = record_time;
+      record_ind += 1;
+      record_time = 0;
+    }
+  } else if (dir == 0 && lastdir == -1) {
+    // Must not be playing to record
+    if (replay_ind == -1) {
+      hist[record_ind] = record_time;
+      record_ind += 1;
+      record_time = 0;
+    }
   }
+  record_time += 1;
   
   if (replay_ind == -1) {
     //int intensity = abs((analogRead(A1) / 4) - 129);
     int intensity = 0;
-    if (dir == 1) {
+    if (dir != 0) {
       intensity = 128;
     }
     nextcolor = Wheel(currcolor, intensity);
