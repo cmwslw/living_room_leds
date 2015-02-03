@@ -20,7 +20,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NE
 
 int currcolor = 0;
 
-#define NHIST 20
+#define NHIST 30
 // Set to -1 to turn replay off
 int replay_ind = -1;
 int hist[NHIST];
@@ -76,12 +76,12 @@ void loop() {
       clearhist();
     } else if (hist[0] != -1) {
       // Start playback if it is in memory
-      hist[record_ind] = record_time;
+      if (record_ind < NHIST - 1)
+        hist[record_ind] = record_time;
       record_ind = -1;
       replay_ind = 0;
     }
   } else if (dir == -1 && lastdir == 0) {
-    // Must not be playing to record
     if (replay_ind != -1) {
       replay_ind = -1;
       clearhist();
@@ -90,14 +90,16 @@ void loop() {
       record_ind = 0;
       record_time = 0;
     } else {
-      hist[record_ind] = record_time;
+      if (record_ind < NHIST - 1)
+        hist[record_ind] = record_time;
       record_ind += 1;
       record_time = 0;
     }
   } else if (dir == 0 && lastdir == -1) {
     // Must not be playing to record
     if (replay_ind == -1) {
-      hist[record_ind] = record_time;
+      if (record_ind < NHIST - 1)
+        hist[record_ind] = record_time;
       record_ind += 1;
       record_time = 0;
     }
