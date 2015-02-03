@@ -23,10 +23,12 @@ int currcolor = 0;
 #define BTNTHRES 50
 #define LEFTCORNER 91
 #define CENTERPIX 195
+#define NMODES 2
 #define NHIST 30
 // Set to -1 to turn replay off
 int replay_ind = -1;
 int hist[NHIST];
+int lastxdir = 0;
 int lastydir = 0;
 int record_ind;
 int record_time;
@@ -59,12 +61,25 @@ void clearhist() {
 }
 
 void loop() {
+  int x = (analogRead(A0)/4) - 129;
   int y = (analogRead(A1)/4) - 129;
   int ydir = 0;
+  int xdir = 0;
   if (y > BTNTHRES)
     ydir = 1;
   else if (y < -BTNTHRES)
     ydir = -1;
+  if (x > BTNTHRES)
+    xdir = 1;
+  else if (x < -BTNTHRES)
+    xdir = -1;
+    
+  if (xdir == 1 && lastxdir == 0) {
+    mode += 1;
+    strip.show();
+    if (mode > NMODES-1)
+      mode = 0;
+  }
     
   if (mode == 0) {
     // Always run for expanding modes
@@ -143,10 +158,18 @@ void loop() {
     }
      
     strip.setPixelColor(CENTERPIX, nextcolor);
+  } else if (mode == 1) {
+    for (int i = 0; i < PIXEL_COUNT; i += 1) {
+      if (random(50) == 0)
+        strip.setPixelColor(i, 0xAAAAAA);
+      else
+        strip.setPixelColor(i, 0);
+    }
   }
   
   strip.show();
   lastydir = ydir;
+  lastxdir = xdir;
 }
 
 void expand() {
