@@ -23,21 +23,23 @@ int currcolor = 0;
 #define BTNTHRES 110
 #define LEFTCORNER 91
 #define CENTERPIX 195
-#define NMODES 3
+#define NMODES 6
 #define NHIST 30
 // Set to -1 to turn replay off
 int replay_ind = -1;
 int hist[NHIST];
+int mode = 5;
 int lastxdir = 0;
 int lastydir = 0;
 int record_ind;
 int record_time;
-int mode = 0;
 int frame = 0;
+
 
 void setup() {
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
+  Serial.begin(9600);
   clearhist();
   
   // Enable demo replay
@@ -166,17 +168,56 @@ void loop() {
     strip.setPixelColor(CENTERPIX, nextcolor);
   } else if (mode == 1) { // sparkles
     for (int i = 0; i < PIXEL_COUNT; i += 1) {
-      if (random(50) == 0)
+      if (random((-y)/4+32+2) == 0)
         strip.setPixelColor(i, 0xAAAAAA);
       else
         strip.setPixelColor(i, 0);
     }
   } else if (mode == 2) { // strobe
     for (int i = LEFTCORNER; i < PIXEL_COUNT; i += 1) {
-      if (frame % 4 >= 2)
+      if (frame % 4+y/64 >= 2)
         strip.setPixelColor(i, 0x666666);
       else
         strip.setPixelColor(i, 0);
+    }
+  } else if (mode == 3) {
+    static long n = 0;
+    for (int i = 0; i < sizeof(long)*8; i++) {
+      strip.setPixelColor(i, (n >> i) & 1 ? 0xff0000 : 0);
+    }
+    n++;
+  } else if (mode == 4) {
+    for (int i = LEFTCORNER; i < PIXEL_COUNT; i += 1) {
+        strip.setPixelColor(i, Wheel(y+128, 128));
+    }
+  } else if (mode == 5) {
+    const int rule = 110;
+    const uint32_t automataColor = 0x000060;
+    if (frame == 0) {
+      // Initial condition
+      strip.setPixelColor(0, automataColor);
+      for (int i = 1; i < PIXEL_COUNT; i++) {
+        strip.setPixelColor(i, 0);
+      }
+    }
+    if (frame % 20)
+      return;
+    
+    int last = 0;
+    int curr = 0;
+    int next = 0;
+    for (int i = 0; i < PIXEL_COUNT; i++) {
+      last = curr;
+      curr = !!strip.getPixelColor(i);
+      next = !!strip.getPixelColor(i+1);
+      
+      if(frame == 0) {
+        Serial.println(last);
+      }
+      
+      int id = next | (curr<<1) | (last<<2);
+      int c = !!(rule & (1<<id));
+      strip.setPixelColor(i, c ? automataColor : 0);
     }
   }
   
@@ -216,3 +257,5 @@ uint32_t Wheel(byte WheelPos, int intensity) {
    return strip.Color((WheelPos * 3)*intensity/128, (255 - WheelPos * 3)*intensity/128, 0);
   }
 }
+
+
