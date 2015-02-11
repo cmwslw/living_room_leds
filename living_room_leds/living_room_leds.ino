@@ -191,33 +191,42 @@ void loop() {
         strip.setPixelColor(i, Wheel(y+128, 128));
     }
   } else if (mode == 5) {
-    const int rule = 110;
+    const int rule = 30;
     const uint32_t automataColor = 0x000060;
     if (frame == 0) {
       // Initial condition
-      strip.setPixelColor(0, automataColor);
-      for (int i = 1; i < PIXEL_COUNT; i++) {
+      for (int i = 0; i < PIXEL_COUNT; i++) {
         strip.setPixelColor(i, 0);
       }
+      strip.setPixelColor(PIXEL_COUNT-1, automataColor);
     }
-    if (frame % 20)
-      return;
-    
-    int last = 0;
-    int curr = 0;
-    int next = 0;
-    for (int i = 0; i < PIXEL_COUNT; i++) {
-      last = curr;
-      curr = !!strip.getPixelColor(i);
-      next = !!strip.getPixelColor(i+1);
-      
-      if(frame == 0) {
-        Serial.println(last);
+    if (frame % 4 == 0) {
+      int last = 0;
+      int curr = 0;
+      int next = 0;
+      for (int i = 0; i < PIXEL_COUNT; i++) {
+        last = !!strip.getPixelColor(i);
+        curr = (i<PIXEL_COUNT) ? !!strip.getPixelColor(i+1) : 0;
+        next = (i+1<PIXEL_COUNT) ? !!strip.getPixelColor(i+2) : 0;
+        
+        int id = next | (curr<<1) | (last<<2);
+        int c = !!(rule & (1<<id));
+        
+        /*if(frame == 1*20 && i < 3) {
+          Serial.println("Inner Loop");
+          Serial.println(i);
+          Serial.println(last);
+          Serial.println(curr);
+          Serial.println(next);
+          Serial.println(id);
+          Serial.println(c);
+          Serial.print(c);
+          Serial.print(" ");
+        }
+        Serial.println("");*/
+        
+        strip.setPixelColor(i, c ? automataColor : 0);
       }
-      
-      int id = next | (curr<<1) | (last<<2);
-      int c = !!(rule & (1<<id));
-      strip.setPixelColor(i, c ? automataColor : 0);
     }
   }
   
