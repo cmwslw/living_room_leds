@@ -21,19 +21,20 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NE
 int currcolor = 0;
 
 #define BTNTHRES 110
-#define LEFTCORNER 91
-#define CENTERPIX 195
-#define NMODES 6
+#define LEFTCORNER 0
+#define TOPCORNER 150
+#define CENTERPIX 150
+#define NMODES 5
 #define NHIST 30
 // Set to -1 to turn replay off
 int replay_ind = -1;
 int hist[NHIST];
-int mode = 5;
+int mode = 4;
 int lastxdir = 0;
 int lastydir = 0;
 int record_ind;
 int record_time;
-int frame = 0;
+unsigned int frame = 0;
 
 
 void setup() {
@@ -175,12 +176,31 @@ void loop() {
     }
   } else if (mode == 2) { // strobe
     for (int i = LEFTCORNER; i < PIXEL_COUNT; i += 1) {
-      if (frame % 4+y/64 >= 2)
-        strip.setPixelColor(i, 0x666666);
+      //if (frame % 4+y/64 >= 2)
+      if (frame % 4+y/64 >= 2 && y > -100)
+        strip.setPixelColor(i, 0x444444);
       else
         strip.setPixelColor(i, 0);
     }
   } else if (mode == 3) {
+    for (int i = 0; i < TOPCORNER; i += 1) {
+        strip.setPixelColor(i, Wheel(y+128, 128));
+        //strip.setPixelColor(i, 0xff0000);
+    }
+  } else if (mode == 4) {
+    for (int i = 0; i < TOPCORNER; i += 1) {
+      int thisi = (i + frame/16) % TOPCORNER;
+      if (thisi < TOPCORNER/3)
+        strip.setPixelColor(i, 0x440000);
+      else if (thisi < TOPCORNER*2/3)
+        strip.setPixelColor(i, 0x444444);
+      else
+        strip.setPixelColor(i, 0x000044);
+        //strip.setPixelColor(i, 0xff0000);
+    }
+  }
+  /* else if (mode == 3) {
+    // Binary counter
     static long n = 0;
     for (int i = 0; i < sizeof(long)*8; i++) {
       strip.setPixelColor(i, (n >> i) & 1 ? 0xff0000 : 0);
@@ -189,6 +209,7 @@ void loop() {
   } else if (mode == 4) {
     for (int i = LEFTCORNER; i < PIXEL_COUNT; i += 1) {
         strip.setPixelColor(i, Wheel(y+128, 128));
+        //strip.setPixelColor(i, 0xff0000);
     }
   } else if (mode == 5) {
     const int rule = 30;
@@ -212,23 +233,10 @@ void loop() {
         int id = next | (curr<<1) | (last<<2);
         int c = !!(rule & (1<<id));
         
-        /*if(frame == 1*20 && i < 3) {
-          Serial.println("Inner Loop");
-          Serial.println(i);
-          Serial.println(last);
-          Serial.println(curr);
-          Serial.println(next);
-          Serial.println(id);
-          Serial.println(c);
-          Serial.print(c);
-          Serial.print(" ");
-        }
-        Serial.println("");*/
-        
         strip.setPixelColor(i, c ? automataColor : 0);
       }
     }
-  }
+  }*/
   
   strip.show();
   lastydir = ydir;
